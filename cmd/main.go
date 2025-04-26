@@ -1,3 +1,102 @@
 package main
 
-func main() {}
+import (
+	"database/sql"
+	"fmt"
+	"log"
+	"net/http"
+	"os"
+	"time"
+
+	_ "github.com/jackc/pgconn"
+	_ "github.com/jackc/pgx/v4"
+	_ "github.com/jackc/pgx/v4/stdlib"
+	// "github.com/obynonwane/broker-service/data"
+)
+
+const webPort = "8080"
+
+var counts int64
+
+type Config struct {
+	DB     *sql.DB
+	Models data.Models
+}
+
+func main() {
+
+	log.Println("Starting broker service")
+
+
+	//Connect to DB
+	conn := connectToDB()
+	if conn == nil {
+		log.Panic("can't connect to Postgres")
+	}
+
+	//setup config
+	app := Config{
+		DB:     conn,
+		Models: data.New(conn),
+	}
+
+	// define http server
+	srv := &http.Server{
+		Addr:    fmt.Sprintf(":%s", webPort),
+		Handler: app.routes(),
+	}
+
+	// start the server
+	err := srv.ListenAndServe()
+	if err != nil {
+		log.Panic(err)
+	}
+}
+
+func openDB(dsn string) (*sql.DB, error) {
+	db, err := sql.Open("pgx", dsn)
+	if err != nil {
+		return nil, err
+	}
+
+	err = db.Ping()
+	if err != nil {
+		return nil, err
+	}
+
+	return db, nil
+}
+
+func connectToDB() *sql.DB {
+
+	dbUser := os.Getenv("DB_USER")
+	dbPassword := os.Getenv("DB_PASSWORD")
+	dbHost := os.Getenv("DB_HOST")
+	dbPort := os.Getenv("DB_PORT")
+	dbName := os.Getenv("DB_NAME")
+
+	// Construct the DSN string
+	dsn := fmt.Sprintf("user=%s password=%s host=%s port=%s dbname=%s", dbUser, dbPassword, dbHost, dbPort, dbName)
+
+	log.Printf("%s", dsn)
+	// dsn := os.Getenv("DSN")
+	for {
+		connection, err := openDB(dsn)
+		if err != nil {
+			log.Println("Postgres not yet ready ...")
+			counts++
+		} else {
+			log.Println("Connected to Postgres ...")
+			return connection
+		}
+
+		if counts > 10 {
+			log.Println(err)
+			return nil
+		}
+
+		log.Println("backing off for 2 seconds")
+		time.Sleep(2 * time.Second)
+		continue
+	}
+}

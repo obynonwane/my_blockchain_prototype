@@ -1,4 +1,12 @@
 SHELL := /bin/bash
 
+# Wallets
+# amara: 0x58faAD3334A942BeD2cAd3D5aA8A688478933084
+# magnus: 0x436720591bb8FD9C1f2dC3595795aA1135f61e5c
+# obinna: 0x4641270AA92a075a1Bc79aa327b03fdb4c2D28d8
+# Miner1: 0xc6E21c47FE24b3aDF477f7149F1caAA3a915624B
+# Miner2: 0xBdC65974AA77521303FB11f0B162024257e01004
+# Miner3: 0x63918C76b7D264878dFa4b43eAFFfA9763E8Bc5E
+
 private_key:
 	go run -mod=vendor ./cmd/utilities/scripts/private_key.go
