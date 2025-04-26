@@ -1,18 +1,19 @@
-
-# Use Go 1.22 for building and running tests
+# Use Go 1.24 on Alpine Linux
 FROM golang:1.24-alpine AS builder
 
-# Set the working directory in the container
 WORKDIR /app
 
-# Install make and other necessary packages (e.g., git)
+# Install make and git
 RUN apk add --no-cache git make
 
-# Copy the entire source code into the container
+# Copy go.mod, go.sum, and vendor folder first (better layer caching)
+COPY go.mod go.sum vendor/ ./
+
+# Copy the rest of the source code
 COPY . .
 
-# Download the Go modules dependencies
-RUN go mod download
+# Build the binary using the vendor folder
+RUN go build -mod=vendor -o nodeApp ./cmd
 
-# Default command to run the binary
+# Default command to run the app
 CMD ["/app/nodeApp"]
