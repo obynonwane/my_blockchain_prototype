@@ -11,7 +11,7 @@ import (
 	_ "github.com/jackc/pgconn"
 	_ "github.com/jackc/pgx/v4"
 	_ "github.com/jackc/pgx/v4/stdlib"
-	// "github.com/obynonwane/broker-service/data"
+	"github.com/obynonwane/my_blockchain_prototype/cmd/database"
 )
 
 const webPort = "8080"
@@ -20,13 +20,12 @@ var counts int64
 
 type Config struct {
 	DB     *sql.DB
-	Models data.Models
+	Models database.Models
 }
 
 func main() {
 
 	log.Println("Starting broker service")
-
 
 	//Connect to DB
 	conn := connectToDB()
@@ -37,7 +36,7 @@ func main() {
 	//setup config
 	app := Config{
 		DB:     conn,
-		Models: data.New(conn),
+		Models: database.New(conn),
 	}
 
 	// define http server
