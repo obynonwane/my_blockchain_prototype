@@ -1,8 +1,8 @@
 services:
   node-service:
     build:
-      context: ./cmd
-      dockerfile: ./cmd
+      context: .
+      dockerfile: Dockerfile
     restart: always
     ports:
       - "8080:8080"
@@ -10,14 +10,15 @@ services:
       mode: replicated
       replicas: 1
     environment:
-      DB_USER: "${DB_USER}"
-      DB_PASSWORD: "${DB_PASSWORD}"
-      DB_HOST: "${DB_HOST}"
-      DB_PORT: "${DB_PORT}"
-      DB_NAME: "${DB_NAME}"
+      DB_USER: "${DATABASE_USER}"
+      DB_PASSWORD: "${DATABASE_PASSWORD}"
+      DB_HOST: "${DATABASE_HOST}"
+      DB_PORT: "${DATABASE_PORT}"
+      DB_NAME: "${DATABASE_NAME}"
 
   postgres:
-    image: "postgres:14.2"
+    image: postgres:latest
+    container_name: postgres
     ports:
       - "5432:5432"
     restart: always
@@ -25,13 +26,20 @@ services:
       mode: replicated
       replicas: 1
     environment:
-      POSTGRES_USER: root
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: nodedb
+      POSTGRES_USER: "${POSTGRES_USER}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
+      POSTGRES_DB: "${POSTGRES_DB}"
     volumes:
-      - ./db-data/postgres/:/var/lib/postgresql/data/
+      - ./data/postgres:/var/lib/postgresql/data
+    env_file:
+      - .env # Ensure the .env.test file is being used
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -q -d ${POSTGRES_DB} -U ${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
-  db_init:
+  postgres_init:
     image: postgres:latest
     depends_on:
       postgres:
@@ -39,11 +47,11 @@ services:
     environment:
       POSTGRES_USER: "${POSTGRES_USER}"
       POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
-      POSTGRES_DB: "${POSTGRES_DB}"
+    env_file:
+      - .env
     entrypoint:
       [
         "sh",
         "-c",
-        "until pg_isready -h postgres -U ${POSTGRES_USER}; do echo waiting for postgres; sleep 2; done; PGPASSWORD=${POSTGRES_PASSWORD} createdb -h postgres -U ${POSTGRES_USER} --owner=${POSTGRES_USER} ${POSTGRES_DB}",
+        "until pg_isready -h postgres -U ${POSTGRES_USER}; do echo waiting for postgres; sleep 2; done; PGPASSWORD=${POSTGRES_PASSWORD} createdb -h postgres -U ${POSTGRES_USER} --owner=${POSTGRES_USER} nodedb",
       ]
-

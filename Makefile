@@ -43,3 +43,25 @@ down:
 	@echo "Stopping docker compose..."
 	@ docker compose down
 	@echo "Done!"
+
+
+#-----------------------------------------------------------TEST DB OPERATIONS - Using Docker-----------------------------------------------------------#
+# migrate_up: apply all migrations locally
+migrate_up: ## Apply all migrations locally
+	migrate -path ./db/migrations -database "postgresql://admin:password@localhost:5433/nodedb?sslmode=disable" -verbose up
+
+# migrate_down: rollback all migrations locally
+migrate_down: ## Rollback all migrations locally
+	migrate -path ./db/migrations -database "postgresql://admin:password@localhost:5433/nodedb?sslmode=disable" -verbose down
+
+# migrate_down_last: rollback the last migration locally
+migrate_down_last: ## Rollback the last migration locally
+	migrate -path ./db/migrations -database "postgresql://admin:password@localhost:5433/nodedb?sslmode=disable" -verbose down 1
+
+# dropdb: drop the database
+dropdb: ## Drop the database
+	docker exec -it postgres dropdb -U admin nodedb
+
+# createdb: create the database
+createdb: ## Create the database
+	docker exec -it postgres createdb --username=admin --owner=admin nodedb
