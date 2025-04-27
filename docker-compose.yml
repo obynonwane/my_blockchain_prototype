@@ -10,11 +10,11 @@ services:
       mode: replicated
       replicas: 1
     environment:
-      DB_USER: "${DATABASE_USER}"
-      DB_PASSWORD: "${DATABASE_PASSWORD}"
-      DB_HOST: "${DATABASE_HOST}"
-      DB_PORT: "${DATABASE_PORT}"
-      DB_NAME: "${DATABASE_NAME}"
+      DATABASE_USER: "${DATABASE_USER}"
+      DATABASE_PASSWORD: "${DATABASE_PASSWORD}"
+      DATABASE_HOST: "${DATABASE_HOST}"
+      DATABASE_PORT: "${DATABASE_PORT}"
+      DATABASE_NAME: "${DATABASE_NAME}"
 
   postgres:
     image: postgres:latest
@@ -53,5 +53,11 @@ services:
       [
         "sh",
         "-c",
-        "until pg_isready -h postgres -U ${POSTGRES_USER}; do echo waiting for postgres; sleep 2; done; PGPASSWORD=${POSTGRES_PASSWORD} createdb -h postgres -U ${POSTGRES_USER} --owner=${POSTGRES_USER} nodedb",
+        "until pg_isready -h postgres -U ${POSTGRES_USER}; do echo waiting for postgres; sleep 2; done; \
+        if ! PGPASSWORD=${POSTGRES_PASSWORD} psql -h postgres -U ${POSTGRES_USER} -d postgres -tAc \"SELECT 1 FROM pg_database WHERE datname='nodedb'\" | grep -q 1; then \
+          echo 'Creating database nodedb'; \
+          PGPASSWORD=${POSTGRES_PASSWORD} createdb -h postgres -U ${POSTGRES_USER} -d postgres --owner=${POSTGRES_USER} nodedb; \
+        else \
+          echo 'Database nodedb already exists'; \
+        fi"
       ]

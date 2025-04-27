@@ -45,7 +45,7 @@ down:
 	@echo "Done!"
 
 
-#-----------------------------------------------------------TEST DB OPERATIONS - Using Docker-----------------------------------------------------------#
+#-------------------------------------------------------------TEST DB OPERATIONS - Using Docker----------------------------------------------------------------#
 # migrate_up: apply all migrations locally
 migrate_up: ## Apply all migrations locally
 	migrate -path ./db/migrations -database "postgresql://admin:password@localhost:5433/nodedb?sslmode=disable" -verbose up

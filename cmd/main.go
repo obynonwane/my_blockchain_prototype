@@ -15,6 +15,7 @@ import (
 )
 
 const webPort = "8080"
+const privatePort = "8081"
 
 var counts int64
 
@@ -25,7 +26,7 @@ type Config struct {
 
 func main() {
 
-	log.Println("Starting broker service")
+	log.Println("Starting node service")
 
 	//Connect to DB
 	conn := connectToDB()
@@ -39,17 +40,41 @@ func main() {
 		Models: database.New(conn),
 	}
 
-	// define http server
-	srv := &http.Server{
-		Addr:    fmt.Sprintf(":%s", webPort),
-		Handler: app.routes(),
-	}
+	// Start the service listening for api requests.
+	go func() {
+		// define http server
+		srv := &http.Server{
+			Addr:    fmt.Sprintf(":%s", webPort),
+			Handler: app.publicRoutes(),
+		}
 
-	// start the server
-	err := srv.ListenAndServe()
-	if err != nil {
-		log.Panic(err)
-	}
+		// start the server
+		err := srv.ListenAndServe()
+		if err != nil {
+			log.Panic(err)
+		}
+
+	}()
+
+	// Start the service listening for api requests.
+	go func() {
+		// start second server port
+		// define http server
+		srv2 := &http.Server{
+			Addr:    fmt.Sprintf(":%s", privatePort),
+			Handler: app.privateRoutes(),
+		}
+
+		// start the server
+		err := srv2.ListenAndServe()
+		if err != nil {
+			log.Panic(err)
+		}
+
+	}()
+
+	// Prevent main from exiting
+	select {}
 }
 
 func openDB(dsn string) (*sql.DB, error) {
@@ -73,6 +98,7 @@ func connectToDB() *sql.DB {
 	dbHost := os.Getenv("DATABASE_HOST")
 	dbPort := os.Getenv("DATABASE_PORT")
 	dbName := os.Getenv("DATABASE_NAME")
+	log.Println("db user", dbUser)
 
 	// Construct the DSN string
 	dsn := fmt.Sprintf("user=%s password=%s host=%s port=%s dbname=%s", dbUser, dbPassword, dbHost, dbPort, dbName)
