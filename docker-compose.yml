@@ -5,7 +5,9 @@ services:
       dockerfile: Dockerfile
     restart: always
     ports:
-      - "8080:8080"
+      - "8080:8080" # Public route
+      - "8081:8081" # Private route
+      - "8082:8082" # Web route
     deploy:
       mode: replicated
       replicas: 1
@@ -49,15 +51,14 @@ services:
       POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
     env_file:
       - .env
-    entrypoint:
-      [
+    entrypoint: [
         "sh",
         "-c",
         "until pg_isready -h postgres -U ${POSTGRES_USER}; do echo waiting for postgres; sleep 2; done; \
         if ! PGPASSWORD=${POSTGRES_PASSWORD} psql -h postgres -U ${POSTGRES_USER} -d postgres -tAc \"SELECT 1 FROM pg_database WHERE datname='nodedb'\" | grep -q 1; then \
-          echo 'Creating database nodedb'; \
-          PGPASSWORD=${POSTGRES_PASSWORD} createdb -h postgres -U ${POSTGRES_USER} -d postgres --owner=${POSTGRES_USER} nodedb; \
+        echo 'Creating database nodedb'; \
+        PGPASSWORD=${POSTGRES_PASSWORD} createdb -h postgres -U ${POSTGRES_USER} -d postgres --owner=${POSTGRES_USER} nodedb; \
         else \
-          echo 'Database nodedb already exists'; \
-        fi"
+        echo 'Database nodedb already exists'; \
+        fi",
       ]

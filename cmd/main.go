@@ -12,10 +12,12 @@ import (
 	_ "github.com/jackc/pgx/v4"
 	_ "github.com/jackc/pgx/v4/stdlib"
 	"github.com/obynonwane/my_blockchain_prototype/cmd/database"
+	"github.com/obynonwane/my_blockchain_prototype/cmd/logger"
 )
 
-const webPort = "8080"
+const publicPort = "8080"
 const privatePort = "8081"
+const webPort = "8082"
 
 var counts int64
 
@@ -26,7 +28,8 @@ type Config struct {
 
 func main() {
 
-	log.Println("Starting node service")
+	// Initialize logger
+	logger.Init()
 
 	//Connect to DB
 	conn := connectToDB()
@@ -40,11 +43,11 @@ func main() {
 		Models: database.New(conn),
 	}
 
-	// Start the service listening for api requests.
+	// Start the service listening on public port.
 	go func() {
 		// define http server
 		srv := &http.Server{
-			Addr:    fmt.Sprintf(":%s", webPort),
+			Addr:    fmt.Sprintf(":%s", publicPort),
 			Handler: app.publicRoutes(),
 		}
 
@@ -56,17 +59,34 @@ func main() {
 
 	}()
 
-	// Start the service listening for api requests.
+	// Start the service listening on private port.
 	go func() {
 		// start second server port
 		// define http server
-		srv2 := &http.Server{
+		srv := &http.Server{
 			Addr:    fmt.Sprintf(":%s", privatePort),
 			Handler: app.privateRoutes(),
 		}
 
 		// start the server
-		err := srv2.ListenAndServe()
+		err := srv.ListenAndServe()
+		if err != nil {
+			log.Panic(err)
+		}
+
+	}()
+
+	// Start the service listening on web port.
+	go func() {
+		// start second server port
+		// define http server
+		srv := &http.Server{
+			Addr:    fmt.Sprintf(":%s", webPort),
+			Handler: app.webRoutes(),
+		}
+
+		// start the server
+		err := srv.ListenAndServe()
 		if err != nil {
 			log.Panic(err)
 		}

@@ -1,3 +1,4 @@
+// /logger/logger.go
 package logger
 
 import (
@@ -6,19 +7,23 @@ import (
 	"github.com/rs/zerolog"
 )
 
-// Initialize the logger
+// Global logger instance
 var Log zerolog.Logger
 
+// Initialize the logger (called once in main or server.go)
 func Init() {
-	// Set the global logger to output JSON logs by default
 	Log = zerolog.New(os.Stdout).With().Timestamp().Logger()
 }
 
-// Utility function for easier logging
+// Utility functions to simplify logging
 func Info(message string) {
 	Log.Info().Msg(message)
 }
 
 func Error(message string, err error) {
 	Log.Error().Err(err).Msg(message)
+}
+
+func Debug(message string) {
+	Log.Debug().Msg(message)
 }
