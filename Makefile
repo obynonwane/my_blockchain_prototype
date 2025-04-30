@@ -51,6 +51,14 @@ down:
 	@ docker compose down
 	@echo "Done!"
 
+# migrate: create a new migration file e.g make migrate schema=<migration_name>
+MIGRATE_CMD = migrate create -ext sql -dir ./db/migrations -seq
+MIGRATION_NAME ?= migration
+migrate: ## Create a new migration file e.g make migrate schema=<migration_name>
+	@$(MIGRATE_CMD) $(MIGRATION_NAME)
+
+# 1. create migration files - up and down files
+# migrate create -ext sql -dir migrations/db -seq init_schema
 
 #-------------------------------------------------------------TEST DB OPERATIONS - Using Docker----------------------------------------------------------------#
 # migrate_up: apply all migrations locally
