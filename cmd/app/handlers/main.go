@@ -11,6 +11,8 @@ import (
 	_ "github.com/jackc/pgconn"
 	_ "github.com/jackc/pgx/v4"
 	_ "github.com/jackc/pgx/v4/stdlib"
+	v1 "github.com/obynonwane/my_blockchain_prototype/cmd/app/handlers/V1"
+	appConfig "github.com/obynonwane/my_blockchain_prototype/cmd/config"
 	"github.com/obynonwane/my_blockchain_prototype/cmd/database"
 	"github.com/obynonwane/my_blockchain_prototype/cmd/logger"
 )
@@ -20,11 +22,6 @@ const privatePort = "8081"
 const webPort = "8082"
 
 var counts int64
-
-type Config struct {
-	DB     *sql.DB
-	Models database.Models
-}
 
 func main() {
 
@@ -38,17 +35,20 @@ func main() {
 	}
 
 	//setup config
-	app := Config{
+	app := &appConfig.Config{
 		DB:     conn,
 		Models: database.New(conn),
 	}
+
+	// Inject config into routes
+	routes := v1.NewRoutes(app)
 
 	// Start the service listening on public port.
 	go func() {
 		// define http server
 		srv := &http.Server{
 			Addr:    fmt.Sprintf(":%s", publicPort),
-			Handler: app.publicRoutes(),
+			Handler: routes.PublicRoutes(),
 		}
 
 		// start the server
@@ -65,7 +65,7 @@ func main() {
 		// define http server
 		srv := &http.Server{
 			Addr:    fmt.Sprintf(":%s", privatePort),
-			Handler: app.privateRoutes(),
+			Handler: routes.PrivateRoutes(),
 		}
 
 		// start the server
@@ -82,7 +82,7 @@ func main() {
 		// define http server
 		srv := &http.Server{
 			Addr:    fmt.Sprintf(":%s", webPort),
-			Handler: app.webRoutes(),
+			Handler: routes.WebRoutes(),
 		}
 
 		// start the server

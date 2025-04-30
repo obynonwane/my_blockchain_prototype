@@ -8,6 +8,13 @@ SHELL := /bin/bash
 # Miner2: 0xBdC65974AA77521303FB11f0B162024257e01004
 # Miner3: 0x63918C76b7D264878dFa4b43eAFFfA9763E8Bc5E
 
+# Bookeeping transactions
+# curl -il -X GET http://localhost:8080/v1/genesis/list
+# curl -il -X GET http://localhost:9080/v1/node/status
+# curl -il -X GET http://localhost:8080/v1/accounts/list
+# curl -il -X GET http://localhost:8080/v1/tx/uncommitted/list
+# curl -il -X GET http://localhost:8080/v1/blocks/list
+# curl -il -X GET http://localhost:9080/v1/node/block/list/1/latest
 
 NODE_BINARY=nodeApp
 NODE_IMAGE := biostech/node-service:1.0.0
@@ -16,7 +23,7 @@ private_key:
 	go run -mod=vendor ./cmd/utilities/scripts/private_key.go
 
 build_push_node:
-	cd ./cmd/ && docker build --no-cache -f Dockerfile -t $(NODE_IMAGE) . && docker push $(NODE_IMAGE)
+	cd ./cmd/app/handlers && docker build --no-cache -f Dockerfile -t $(NODE_IMAGE) . && docker push $(NODE_IMAGE)
 
 ## up: starts all containers in the background without forcing build
 up:
@@ -35,7 +42,7 @@ up_build: build_node
 # build_node: builds the node binary as a linux executable
 build_node:
 	@echo "Building node binary..."
-	@ env GOOS=linux CGO_ENABLED=0 go build  -o ${NODE_BINARY} ./cmd
+	@ env GOOS=linux CGO_ENABLED=0 go build  -o ${NODE_BINARY} ./cmd/app/handlers
 	@echo "Done!"
 
 ## down: stop docker compose

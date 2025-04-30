@@ -13,7 +13,7 @@ COPY go.mod go.sum vendor/ ./
 COPY . .
 
 # Build the binary using the vendor folder
-RUN go build -mod=vendor -o nodeApp ./cmd
+RUN go build -mod=vendor -o nodeApp ./cmd/app/handlers
 
 # Default command to run the app
 CMD ["/app/nodeApp"]
