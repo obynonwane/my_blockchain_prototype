@@ -5,11 +5,12 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/obynonwane/my_blockchain_prototype/cmd/app/handlers/V1/custom"
 	"github.com/obynonwane/my_blockchain_prototype/cmd/database"
 )
 
 type Handlers struct {
-	Model database.Models
+	Model *database.Models
 }
 
 type User struct {
@@ -25,18 +26,18 @@ func (h *Handlers) Genesis(w http.ResponseWriter, r *http.Request) {
 func (h *Handlers) CreateUser(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
-	var data *database.User
+	var data *custom.User
 	err := json.NewDecoder(r.Body).Decode(&data)
 	if err != nil {
 		log.Println(err)
 	}
 
-	err = h.Model.User.Create(data)
-	// if err != nil {
-	// 	log.Println(err, "The error is here")
-	// }
+	res, err := h.Model.User.Create(data)
+	if err != nil {
+		log.Println(err, "The error is here")
+	}
 
-	log.Println("created user")
+	log.Println(res, "created user")
 	log.Println(data)
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("public route"))

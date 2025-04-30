@@ -22,7 +22,7 @@ func NewRoutes(app *config.Config) *AppConfig {
 func (app *AppConfig) PublicRoutes() http.Handler {
 
 	pbl := public.Handlers{
-		Model: app.App.Models,
+		Model: &app.App.Models,
 	}
 	log.Println("starting public server")
 	mux := chi.NewRouter()
@@ -46,7 +46,9 @@ func (app *AppConfig) PublicRoutes() http.Handler {
 
 func (app *AppConfig) PrivateRoutes() http.Handler {
 
-	prv := private.Handlers{}
+	prv := private.Handlers{
+		Model: &app.App.Models,
+	}
 	mux := chi.NewRouter()
 	mux.Use(cors.Handler(cors.Options{
 		AllowedOrigins: []string{
@@ -66,7 +68,9 @@ func (app *AppConfig) PrivateRoutes() http.Handler {
 }
 
 func (app *AppConfig) WebRoutes() http.Handler {
-	web := web.Handlers{}
+	web := web.Handlers{
+		Model: &app.App.Models,
+	}
 	mux := chi.NewRouter()
 	mux.Use(cors.Handler(cors.Options{
 		AllowedOrigins: []string{
