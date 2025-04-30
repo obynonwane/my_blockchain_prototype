@@ -2,6 +2,7 @@ package database
 
 import (
 	"database/sql"
+	"log"
 	"time"
 )
 
@@ -28,17 +29,8 @@ type Models struct {
 	User User
 }
 
-type User struct {
-	ID          int64     `json:"id"`
-	FirstName   string    `json:"first_name,omitempty"`
-	LastName    string    `json:"last_name,omitempty"`
-	Email       string    `json:"email"`
-	Phone       string    `json:"phone"`
-	Password    string    `json:"password"`
-	CreatedAt   time.Time `json:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at"`
-	UserType    string    `json:"user_type"`
-	UserSubType string    `json:"user_sub_type"`
-	IsApproved  bool      `json:"is_approved"`
-	IsActive    bool      `json:"is_active"`
+func (u *User) Create(data *User) error {
+
+	log.Println("inside the create user method")
+	return nil
 }

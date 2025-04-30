@@ -21,7 +21,9 @@ func NewRoutes(app *config.Config) *AppConfig {
 }
 func (app *AppConfig) PublicRoutes() http.Handler {
 
-	pbl := public.Handlers{}
+	pbl := public.Handlers{
+		Model: app.App.Models,
+	}
 	log.Println("starting public server")
 	mux := chi.NewRouter()
 	mux.Use(cors.Handler(cors.Options{
@@ -37,6 +39,7 @@ func (app *AppConfig) PublicRoutes() http.Handler {
 
 	//other users link
 	mux.Get("/v1/genesis/list", pbl.Genesis)
+	mux.Post("/v1/create/user", pbl.CreateUser)
 
 	return mux
 }

@@ -53,25 +53,23 @@ down:
 
 # migrate: create a new migration file e.g make migrate schema=<migration_name>
 MIGRATE_CMD = migrate create -ext sql -dir ./db/migrations -seq
-MIGRATION_NAME ?= migration
+MIGRATION_NAME ?= _
 migrate: ## Create a new migration file e.g make migrate schema=<migration_name>
 	@$(MIGRATE_CMD) $(MIGRATION_NAME)
 
-# 1. create migration files - up and down files
-# migrate create -ext sql -dir migrations/db -seq init_schema
 
 #-------------------------------------------------------------TEST DB OPERATIONS - Using Docker----------------------------------------------------------------#
 # migrate_up: apply all migrations locally
 migrate_up: ## Apply all migrations locally
-	migrate -path ./db/migrations -database "postgresql://admin:password@localhost:5433/nodedb?sslmode=disable" -verbose up
+	migrate -path ./db/migrations -database "postgresql://admin:password@localhost:5432/nodedb?sslmode=disable" -verbose up
 
 # migrate_down: rollback all migrations locally
 migrate_down: ## Rollback all migrations locally
-	migrate -path ./db/migrations -database "postgresql://admin:password@localhost:5433/nodedb?sslmode=disable" -verbose down
+	migrate -path ./db/migrations -database "postgresql://admin:password@localhost:5432/nodedb?sslmode=disable" -verbose down
 
 # migrate_down_last: rollback the last migration locally
 migrate_down_last: ## Rollback the last migration locally
-	migrate -path ./db/migrations -database "postgresql://admin:password@localhost:5433/nodedb?sslmode=disable" -verbose down 1
+	migrate -path ./db/migrations -database "postgresql://admin:password@localhost:5432/nodedb?sslmode=disable" -verbose down 1
 
 # dropdb: drop the database
 dropdb: ## Drop the database
