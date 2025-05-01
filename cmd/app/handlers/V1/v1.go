@@ -1,7 +1,6 @@
 package v1
 
 import (
-	"log"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -10,6 +9,7 @@ import (
 	"github.com/obynonwane/my_blockchain_prototype/cmd/app/handlers/V1/public"
 	"github.com/obynonwane/my_blockchain_prototype/cmd/app/handlers/V1/web"
 	"github.com/obynonwane/my_blockchain_prototype/cmd/config"
+	"github.com/obynonwane/my_blockchain_prototype/cmd/state"
 )
 
 type AppConfig struct {
@@ -21,10 +21,11 @@ func NewRoutes(app *config.Config) *AppConfig {
 }
 func (app *AppConfig) PublicRoutes() http.Handler {
 
+	st := state.New(&app.App.Models)
 	pbl := public.Handlers{
-		Model: &app.App.Models,
+		State: st,
 	}
-	log.Println("starting public server")
+
 	mux := chi.NewRouter()
 	mux.Use(cors.Handler(cors.Options{
 		AllowedOrigins: []string{

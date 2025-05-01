@@ -6,13 +6,17 @@ import (
 	"net/http"
 
 	"github.com/obynonwane/my_blockchain_prototype/cmd/app/handlers/V1/custom"
-	"github.com/obynonwane/my_blockchain_prototype/cmd/database"
+	"github.com/obynonwane/my_blockchain_prototype/cmd/state"
 )
 
-type Handlers struct {
-	Model *database.Models
-}
+// type Handlers struct {
+// 	Model *database.Models
+// 	State *state.State
+// }
 
+type Handlers struct {
+	State *state.State
+}
 type User struct {
 	Name  string `json:"name"`
 	Email string `json:"email"`
@@ -32,12 +36,21 @@ func (h *Handlers) CreateUser(w http.ResponseWriter, r *http.Request) {
 		log.Println(err)
 	}
 
-	res, err := h.Model.User.Create(data)
+	// state := state.State{
+	// 	Model: &config.Config{},
+	// }
+
+	// err = state.CreateUser(data)
+	// if err != nil {
+	// 	log.Println(err, "The error is here")
+	// }
+
+	err = h.State.CreateUser(data)
 	if err != nil {
 		log.Println(err, "The error is here")
 	}
 
-	log.Println(res, "created user")
+	// log.Println(res, "created user")
 	log.Println(data)
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("public route"))
