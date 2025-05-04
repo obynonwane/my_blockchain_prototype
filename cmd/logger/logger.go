@@ -2,28 +2,24 @@
 package logger
 
 import (
-	"os"
-
-	"github.com/rs/zerolog"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 // Global logger instance
-var Log zerolog.Logger
+func New(service string) (*zap.SugaredLogger, error) {
+	config := zap.NewProductionConfig()
+	config.OutputPaths = []string{"stdout"}
+	config.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
+	config.DisableStacktrace = true
+	config.InitialFields = map[string]any{
+		"service": service,
+	}
 
-// Initialize the logger (called once in main or server.go)
-func Init() {
-	Log = zerolog.New(os.Stdout).With().Timestamp().Logger()
-}
+	log, err := config.Build()
+	if err != nil {
+		return nil, err
+	}
 
-// Utility functions to simplify logging
-func Info(message string) {
-	Log.Info().Msg(message)
-}
-
-func Error(message string, err error) {
-	Log.Error().Err(err).Msg(message)
-}
-
-func Debug(message string) {
-	Log.Debug().Msg(message)
+	return log.Sugar(), nil
 }

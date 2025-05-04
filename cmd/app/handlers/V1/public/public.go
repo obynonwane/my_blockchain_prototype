@@ -36,15 +36,6 @@ func (h *Handlers) CreateUser(w http.ResponseWriter, r *http.Request) {
 		log.Println(err)
 	}
 
-	// state := state.State{
-	// 	Model: &config.Config{},
-	// }
-
-	// err = state.CreateUser(data)
-	// if err != nil {
-	// 	log.Println(err, "The error is here")
-	// }
-
 	err = h.State.CreateUser(data)
 	if err != nil {
 		log.Println(err, "The error is here")

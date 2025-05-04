@@ -13,17 +13,17 @@ import (
 )
 
 type AppConfig struct {
-	App *config.Config
+	App   *config.Config
+	State *state.State
 }
 
-func NewRoutes(app *config.Config) *AppConfig {
-	return &AppConfig{App: app}
+func NewRoutes(app *config.Config, st *state.State) *AppConfig {
+	return &AppConfig{App: app, State: st}
 }
 func (app *AppConfig) PublicRoutes() http.Handler {
 
-	st := state.New(&app.App.Models)
 	pbl := public.Handlers{
-		State: st,
+		State: app.State,
 	}
 
 	mux := chi.NewRouter()
