@@ -3,7 +3,6 @@ package main
 import (
 	"database/sql"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"time"
@@ -24,10 +23,6 @@ import (
 
 // build is the git version of this program. It is set using build flags in the makefile.
 var build = "main"
-
-const publicPort = "8080"
-const privatePort = "8081"
-const webPort = "8082"
 
 var counts int64
 
@@ -54,8 +49,9 @@ func run(log *zap.SugaredLogger) error {
 	log.Infow("starting service", "version", build)
 
 	//===========================Connect to DB==========================================================================
-	conn := connectToDB()
+	conn, err := connectToDB(log)
 	if conn == nil {
+		log.Errorw("connection to postgres DB", "status", "error connecting", "ERROR", err)
 		log.Panic("can't connect to Postgres")
 	}
 	//====================================================================================================================
@@ -72,12 +68,12 @@ func run(log *zap.SugaredLogger) error {
 		s := fmt.Sprintf(v, args...)                                    // Step 1: format string like printf
 		log.Infow(s, "traceid", "00000000-0000-0000-0000-000000000000") // Step 2: structured log
 	}
-	//===================================================================================================================== 
+	//=====================================================================================================================
 
 	//===================load the private key file of the onfigured beneficiary:node========================================
 	path := fmt.Sprintf("%s%s.ecdsa", "cmd/zblock/accounts/", "miner1")
 	privateKey, err := crypto.LoadECDSA(path)
-	
+
 	if err != nil {
 		return fmt.Errorf("unable to load private key for node: %w", err)
 	}
@@ -107,7 +103,7 @@ func run(log *zap.SugaredLogger) error {
 	go func() {
 		// define http server
 		srv := &http.Server{
-			Addr:    fmt.Sprintf(":%s", publicPort),
+			Addr:    fmt.Sprintf(":%s", os.Getenv("PUB_PORT")),
 			Handler: routes.PublicRoutes(),
 		}
 
@@ -125,7 +121,7 @@ func run(log *zap.SugaredLogger) error {
 		// start second server port
 		// define http server
 		srv := &http.Server{
-			Addr:    fmt.Sprintf(":%s", privatePort),
+			Addr:    fmt.Sprintf(":%s", os.Getenv("PRV_PORT")),
 			Handler: routes.PrivateRoutes(),
 		}
 
@@ -143,7 +139,7 @@ func run(log *zap.SugaredLogger) error {
 		// start second server port
 		// define http server
 		srv := &http.Server{
-			Addr:    fmt.Sprintf(":%s", webPort),
+			Addr:    fmt.Sprintf(":%s", os.Getenv("WEB_PORT")),
 			Handler: routes.WebRoutes(),
 		}
 
@@ -174,36 +170,35 @@ func openDB(dsn string) (*sql.DB, error) {
 	return db, nil
 }
 
-func connectToDB() *sql.DB {
+func connectToDB(log *zap.SugaredLogger) (*sql.DB, error) {
 
 	dbUser := os.Getenv("DATABASE_USER")
 	dbPassword := os.Getenv("DATABASE_PASSWORD")
 	dbHost := os.Getenv("DATABASE_HOST")
 	dbPort := os.Getenv("DATABASE_PORT")
 	dbName := os.Getenv("DATABASE_NAME")
-	log.Println("db user", dbUser)
 
 	// Construct the DSN string
 	dsn := fmt.Sprintf("user=%s password=%s host=%s port=%s dbname=%s", dbUser, dbPassword, dbHost, dbPort, dbName)
 
-	log.Printf("%s", dsn)
 	// dsn := os.Getenv("DSN")
 	for {
 		connection, err := openDB(dsn)
 		if err != nil {
-			log.Println("Postgres not yet ready ...")
+			log.Infow("Postgres not yet ready ...", "Status", "trying to connect to postgres DB")
 			counts++
 		} else {
-			log.Println("Connected to Postgres ...")
-			return connection
+			log.Infow("Connected to Postgres ...", "Status", "Connected DB")
+			return connection, nil
 		}
 
 		if counts > 10 {
-			log.Println(err)
-			return nil
+			log.Errorw("Error waiting to connect to DB", "Error", err)
+			return nil, err
 		}
 
-		log.Println("backing off for 2 seconds")
+		log.Infow("backing off for 2 seconds", "Status", "trying to connect to postgres DB")
+
 		time.Sleep(2 * time.Second)
 		continue
 	}
