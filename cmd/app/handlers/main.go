@@ -1,10 +1,13 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/ethereum/go-ethereum/crypto"
@@ -80,12 +83,16 @@ func run(log *zap.SugaredLogger) error {
 	//======================================================================================================================
 	//================setup config==========================================================================================
 	app := &appConfig.Config{
-		DB:             conn,
-		Models:         database.New(conn),
-		Genesis:        genesis,
-		SelectStrategy: "Tip",                                               // add default of tip
-		BeneficiaryID:  database.PublicKeyToAccountID(privateKey.PublicKey), // publick key of the node operator/beneficiary
-		EvHandler:      ev,
+		DB:              conn,
+		Models:          database.New(conn),
+		Genesis:         genesis,
+		SelectStrategy:  "Tip",                                               // add default of tip
+		BeneficiaryID:   database.PublicKeyToAccountID(privateKey.PublicKey), // publick key of the node operator/beneficiary
+		EvHandler:       ev,
+		ReadTimeout:     5 * time.Second,  // 5 seconds read timeout
+		WriteTimeout:    10 * time.Second, // 10 seconds write timeout
+		IdleTimeout:     10 * time.Second, // 10 seconds idle timeout
+		ShutdownTimeout: 20 * time.Second, // 20 seconds shutdown timeout
 	}
 	//========================================================================================================================
 
@@ -99,61 +106,98 @@ func run(log *zap.SugaredLogger) error {
 	//========================== Inject config/depencies into routes file=====================================================
 	routes := v1.NewRoutes(app, state)
 	//========================================================================================================================
+
+	//======create a buffered channel to hold the error from listening========================================================
+	serverErrors := make(chan error, 1)
+	//========================================================================================================================
+
 	//=====================Start the service listening on public port.========================================================
+
+	log.Infow("public port", "PORT", os.Getenv("PUB_PORT"))
+	// define http server
+	pub := &http.Server{
+		Addr:    fmt.Sprintf(":%s", "8080"),
+		Handler: routes.PublicRoutes(),
+	}
 	go func() {
-		// define http server
-		srv := &http.Server{
-			Addr:    fmt.Sprintf(":%s", os.Getenv("PUB_PORT")),
-			Handler: routes.PublicRoutes(),
-		}
 
 		// start the server
-		err := srv.ListenAndServe()
-		if err != nil {
-			log.Panic(err)
-		}
+		err := pub.ListenAndServe()
+		serverErrors <- err
 
 	}()
 	//=======================================================================================================================
 
 	//====================== Start the service listening on private port.====================================================
+
+	// start second server port
+	// define http server
+	prv := &http.Server{
+		Addr:    fmt.Sprintf(":%s", os.Getenv("PRV_PORT")),
+		Handler: routes.PrivateRoutes(),
+	}
 	go func() {
-		// start second server port
-		// define http server
-		srv := &http.Server{
-			Addr:    fmt.Sprintf(":%s", os.Getenv("PRV_PORT")),
-			Handler: routes.PrivateRoutes(),
-		}
 
 		// start the server
-		err := srv.ListenAndServe()
-		if err != nil {
-			log.Panic(err)
-		}
+		err := prv.ListenAndServe()
+		serverErrors <- err
 
 	}()
 	//=======================================================================================================================
 
 	// =======================Start the service listening on web port.=======================================================
+
+	// start second server port
+	// define http server
+	web := &http.Server{
+		Addr:    fmt.Sprintf(":%s", os.Getenv("WEB_PORT")),
+		Handler: routes.WebRoutes(),
+	}
 	go func() {
-		// start second server port
-		// define http server
-		srv := &http.Server{
-			Addr:    fmt.Sprintf(":%s", os.Getenv("WEB_PORT")),
-			Handler: routes.WebRoutes(),
-		}
 
 		// start the server
-		err := srv.ListenAndServe()
-		if err != nil {
-			log.Panic(err)
-		}
+		err := web.ListenAndServe()
+		serverErrors <- err
 
 	}()
 	//=========================================================================================================================
 
-	//=======================Prevent main from exiting and accepting request===================================================
-	select {}
+	//=======================Blocking main from exiting and accepting request - waiting for shutdown===========================
+	// Make a channel to listen for an interrupt or terminate signal from the OS.
+	// Use a buffered channel because the signal package requires it.
+	shutdown := make(chan os.Signal, 1)
+	signal.Notify(shutdown, syscall.SIGINT, syscall.SIGTERM)
+	select {
+	case err := <-serverErrors:
+		return fmt.Errorf("server error: %w", err)
+	case sig := <-shutdown:
+		log.Infow("shutdown", "status", "shutdown started", "signal", sig)
+		defer log.Infow("shutdown", "status", "shutdown complete", "signal", sig)
+
+		// Give outstanding requests a deadline for completion.
+		ctx, cancelPub := context.WithTimeout(context.Background(), app.ShutdownTimeout)
+		defer cancelPub()
+
+		// Asking listener to shut down and shed load.
+		log.Infow("shutdown", "status", "shutdown private API started")
+		if err := prv.Shutdown(ctx); err != nil {
+			prv.Close()
+			return fmt.Errorf("could not stop private service gracefully: %w", err)
+		}
+
+		// Give outstanding requests a deadline for completion.
+		ctx, cancelPri := context.WithTimeout(context.Background(), app.ShutdownTimeout)
+		defer cancelPri()
+
+		// Asking listener to shut down and shed load.
+		log.Infow("shutdown", "status", "shutdown public API started")
+		if err := pub.Shutdown(ctx); err != nil {
+			pub.Close()
+			return fmt.Errorf("could not stop public service gracefully: %w", err)
+		}
+	}
+
+	return nil
 }
 
 func openDB(dsn string) (*sql.DB, error) {
