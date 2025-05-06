@@ -149,17 +149,17 @@ func run(log *zap.SugaredLogger) error {
 
 	// start second server port
 	// define http server
-	web := &http.Server{
-		Addr:    fmt.Sprintf(":%s", os.Getenv("WEB_PORT")),
-		Handler: routes.WebRoutes(),
-	}
-	go func() {
+	// web := &http.Server{
+	// 	Addr:    fmt.Sprintf(":%s", os.Getenv("WEB_PORT")),
+	// 	Handler: routes.WebRoutes(),
+	// }
+	// go func() {
 
-		// start the server
-		err := web.ListenAndServe()
-		serverErrors <- err
+	// 	// start the server
+	// 	err := web.ListenAndServe()
+	// 	serverErrors <- err
 
-	}()
+	// }()
 	//=========================================================================================================================
 
 	//=======================Blocking main from exiting and accepting request - waiting for shutdown===========================

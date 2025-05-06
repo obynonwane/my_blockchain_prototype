@@ -43,6 +43,10 @@ func New(cfg config.Config) (*State, error) {
 
 }
 
+// Genesis returns a copy of the genesis information
+func (s *State) Genesis() genesis.Genesis {
+	return s.genesis
+}
 func (s *State) CreateUser(data *custom.User) error {
 	_, err := s.Model.User.Create(data)
 	if err != nil {

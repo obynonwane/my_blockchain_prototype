@@ -6,6 +6,8 @@ import (
 	"net/http"
 
 	"github.com/obynonwane/my_blockchain_prototype/cmd/app/handlers/V1/custom"
+	"github.com/obynonwane/my_blockchain_prototype/cmd/web"
+
 	"github.com/obynonwane/my_blockchain_prototype/cmd/state"
 )
 
@@ -23,8 +25,9 @@ type User struct {
 }
 
 func (h *Handlers) Genesis(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("public route"))
+	ctx := r.Context()
+	gen := h.State.Genesis()
+	web.Respond(ctx, w, gen, http.StatusOK)
 }
 
 func (h *Handlers) CreateUser(w http.ResponseWriter, r *http.Request) {

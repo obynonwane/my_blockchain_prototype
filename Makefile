@@ -31,6 +31,9 @@ up:
 	docker compose up -d
 	@echo "Docker images started!"
 
+down_kill:
+	kill -INT $(shell ps | grep "main -race" | grep -v grep | sed -n 1,1p | cut -c1-5)
+
 ## up_build: stops docker-compose (if running), builds all projects and starts docker compose
 up_build: build_node 
 	@echo "Stopping docker images (if running...)"
