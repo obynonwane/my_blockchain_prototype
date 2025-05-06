@@ -103,6 +103,7 @@ func run(log *zap.SugaredLogger) error {
 	}
 	defer state.Shutdown()
 	//========================================================================================================================
+
 	//========================== Inject config/depencies into routes file=====================================================
 	routes := v1.NewRoutes(app, state)
 	//========================================================================================================================
@@ -161,6 +162,11 @@ func run(log *zap.SugaredLogger) error {
 
 	// }()
 	//=========================================================================================================================
+
+	err = state.SeedGenesisAccount(&genesis)
+	if err != nil {
+		return fmt.Errorf("error creating default and genesis account to DB: %w", err)
+	}
 
 	//=======================Blocking main from exiting and accepting request - waiting for shutdown===========================
 	// Make a channel to listen for an interrupt or terminate signal from the OS.

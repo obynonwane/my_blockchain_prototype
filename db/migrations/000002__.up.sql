@@ -1,5 +1,6 @@
 CREATE TABLE accounts (
-  account_id TEXT PRIMARY KEY,
+  id SERIAL PRIMARY KEY,
+  account_id TEXT,
   balance NUMERIC,
   nonce BIGINT,
   code_hash TEXT,
@@ -7,3 +8,4 @@ CREATE TABLE accounts (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+

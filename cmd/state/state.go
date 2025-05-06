@@ -63,3 +63,13 @@ func (s *State) Shutdown() error {
 
 	return nil
 }
+
+func (s *State) SeedGenesisAccount(genesis *genesis.Genesis) error {
+
+	err := s.Model.UserAccount.SeedGenesisAccount(genesis)
+	if err != nil {
+		log.Println("error creating user in state:", err)
+	}
+
+	return err
+}
