@@ -1,5 +1,11 @@
 SHELL := /bin/bash
 
+
+# Load .env file into Makefile context
+include .env
+export
+
+
 # Wallets
 # amara: 0x2B787621DD7A65270D0D995DD304787812211680
 # magnus: 0x2fF11fB8f1aB5705a1E60456B5AF5B9182F735E0
@@ -62,17 +68,23 @@ migrate: ## Create a new migration file e.g make migrate schema=<migration_name>
 
 
 #-------------------------------------------------------------TEST DB OPERATIONS - Using Docker----------------------------------------------------------------#
-# migrate_up: apply all migrations locally
+# migrate_up: ## Apply all migrations locally
 migrate_up: ## Apply all migrations locally
-	migrate -path ./db/migrations -database "postgresql://admin:password@localhost:5432/nodedb?sslmode=disable" -verbose up
+	migrate -path ./db/migrations \
+		-database "postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(POSTGRES_HOST):$(POSTGRES_PORT)/$(POSTGRES_DB)?sslmode=disable" \
+		-verbose up
 
 # migrate_down: rollback all migrations locally
 migrate_down: ## Rollback all migrations locally
-	migrate -path ./db/migrations -database "postgresql://admin:password@localhost:5432/nodedb?sslmode=disable" -verbose down
+	migrate -path ./db/migrations \
+		-database "postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(POSTGRES_HOST):$(POSTGRES_PORT)/$(POSTGRES_DB)?sslmode=disable" \
+		-verbose down
 
 # migrate_down_last: rollback the last migration locally
 migrate_down_last: ## Rollback the last migration locally
-	migrate -path ./db/migrations -database "postgresql://admin:password@localhost:5432/nodedb?sslmode=disable" -verbose down 1
+	migrate -path ./db/migrations \
+		-database "postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(POSTGRES_HOST):$(POSTGRES_PORT)/$(POSTGRES_DB)?sslmode=disable" \
+		-verbose down 1
 
 # dropdb: drop the database
 dropdb: ## Drop the database

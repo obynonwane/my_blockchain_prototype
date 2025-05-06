@@ -62,3 +62,20 @@ services:
         echo 'Database nodedb already exists'; \
         fi",
       ]
+
+  migrate:
+    image: migrate/migrate
+    depends_on:
+      postgres_init:
+        condition: service_completed_successfully
+    volumes:
+      - ./db/migrations:/migrations
+    env_file:
+      - .env
+    command:
+      [
+        "-path=/migrations",
+        "-database=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${DATABASE_HOST}:${DATABASE_PORT}/${DATABASE_NAME}?sslmode=disable",
+        "-verbose",
+        "up",
+      ]

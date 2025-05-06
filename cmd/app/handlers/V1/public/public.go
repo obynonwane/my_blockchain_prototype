@@ -11,11 +11,6 @@ import (
 	"github.com/obynonwane/my_blockchain_prototype/cmd/state"
 )
 
-// type Handlers struct {
-// 	Model *database.Models
-// 	State *state.State
-// }
-
 type Handlers struct {
 	State *state.State
 }
