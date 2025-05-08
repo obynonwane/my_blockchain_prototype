@@ -4,8 +4,10 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/obynonwane/my_blockchain_prototype/cmd/app/handlers/V1/custom"
+	"github.com/obynonwane/my_blockchain_prototype/cmd/database"
 	"github.com/obynonwane/my_blockchain_prototype/cmd/web"
 
 	"github.com/obynonwane/my_blockchain_prototype/cmd/state"
@@ -36,10 +38,9 @@ func (h *Handlers) CreateUser(w http.ResponseWriter, r *http.Request) {
 
 	err = h.State.CreateUser(data)
 	if err != nil {
-		log.Println(err, "The error is here")
+		h.State.EventHandler()("state: error creating user", err)
 	}
 
-	// log.Println(res, "created user")
 	log.Println(data)
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("public route"))
@@ -50,52 +51,43 @@ func (h *Handlers) Accounts(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	// extract param from url
-	// accountStr := r.URL.Query().Get("account")
+	accountStr := r.URL.Query().Get("account")
 
-	retrieved_accounts, err := h.State.Accounts()
-	if err != nil {
-		log.Println(err, "The error is here")
+	// 	// declare a map
+	var accounts map[database.AccountID]database.Account
+	// switch statement for condition
+	switch accountStr {
+	case "":
+		acts, err := h.State.Accounts()
+		if err != nil {
+			h.State.EventHandler()("state: error retrieving acounts", err)
+		}
+		accounts = acts
+	default:
+		accountID, err := database.ToAccountID(accountStr)
+		if err != nil {
+			h.State.EventHandler()("state: error retrieving acounts", err)
+		}
+
+		account, err := h.State.QueryAccount(accountID)
+		if err != nil {
+			h.State.EventHandler()("state: error retrieving acounts", err)
+		}
+
+		balance, err := strconv.ParseUint(account.Balance, 10, 64)
+		if err != nil {
+			h.State.EventHandler()("state: error retrieving acounts", err)
+		}
+
+		naccount := database.Account{
+			AccountID: database.AccountID(account.AccountID),
+			Nonce:     uint64(account.Nonce),
+			Balance:   balance,
+		}
+
+		// construct a map
+		accounts = map[database.AccountID]database.Account{accountID: naccount}
 	}
 
-	// declare a map
-	// var accounts map[database.AccountID]database.Account
-
-	// switch accountStr {
-	// case "":
-
-	// 	accounts = h.State.Accounts()
-	// }
-
-	web.Respond(ctx, w, retrieved_accounts, http.StatusOK)
+	web.Respond(ctx, w, accounts, http.StatusOK)
 }
-
-// func (h *Handlers) Accounts(w http.ResponseWriter, r *http.Request) {
-
-// 	ctx := r.Context()
-
-// 	// extract param from url
-// 	accountStr := r.URL.Query().Get("account")
-
-// 	// declare a map
-// 	var accounts map[database.AccountID]database.Account
-// 	// switch statement for condition
-// 	switch accountStr {
-// 	case "":
-// 		accounts = h.State.Accounts()
-// 	default:
-// 		accountID, err := database.ToAccountID(accountStr)
-// 		if err != nil {
-// 			log.Println(err)
-// 		}
-
-// 		account, err := h.State.QueryAccount(accountID)
-// 		if err != nil {
-// 			log.Println(err)
-// 		}
-
-// 		// construct a map
-// 		accounts = map[database.AccountID]database.Account{accountID: account}
-// 	}
-
-// 	web.Respond(ctx, w, accounts, http.StatusOK)
-// }

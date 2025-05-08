@@ -115,3 +115,8 @@ func (s *State) SeedGenesisAccount(genesis *genesis.Genesis) error {
 
 	return err
 }
+
+// get method to export evHandler
+func (s *State) EventHandler() config.EventHandler {
+	return s.evHandler
+}
