@@ -44,3 +44,58 @@ func (h *Handlers) CreateUser(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("public route"))
 }
+
+func (h *Handlers) Accounts(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	// extract param from url
+	// accountStr := r.URL.Query().Get("account")
+
+	retrieved_accounts, err := h.State.Accounts()
+	if err != nil {
+		log.Println(err, "The error is here")
+	}
+
+	// declare a map
+	// var accounts map[database.AccountID]database.Account
+
+	// switch accountStr {
+	// case "":
+
+	// 	accounts = h.State.Accounts()
+	// }
+
+	web.Respond(ctx, w, retrieved_accounts, http.StatusOK)
+}
+
+// func (h *Handlers) Accounts(w http.ResponseWriter, r *http.Request) {
+
+// 	ctx := r.Context()
+
+// 	// extract param from url
+// 	accountStr := r.URL.Query().Get("account")
+
+// 	// declare a map
+// 	var accounts map[database.AccountID]database.Account
+// 	// switch statement for condition
+// 	switch accountStr {
+// 	case "":
+// 		accounts = h.State.Accounts()
+// 	default:
+// 		accountID, err := database.ToAccountID(accountStr)
+// 		if err != nil {
+// 			log.Println(err)
+// 		}
+
+// 		account, err := h.State.QueryAccount(accountID)
+// 		if err != nil {
+// 			log.Println(err)
+// 		}
+
+// 		// construct a map
+// 		accounts = map[database.AccountID]database.Account{accountID: account}
+// 	}
+
+// 	web.Respond(ctx, w, accounts, http.StatusOK)
+// }

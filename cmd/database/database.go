@@ -97,3 +97,75 @@ func (ua *UserAccount) SeedGenesisAccount(genesis *genesis.Genesis) error {
 	log.Println("Genesis seeding completed.")
 	return nil
 }
+
+// Query retrieves an account from the database.
+func (ua *UserAccount) Query(accountID AccountID) (UserAccount, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
+	defer cancel()
+
+	query := `
+		SELECT account_id, balance, nonce, code_hash, storage_root, created_at, updated_at
+		FROM accounts
+		WHERE account_id = $1
+	`
+
+	var account UserAccount
+	err := db.QueryRowContext(ctx, query, accountID).Scan(
+		&account.AccountID,
+		&account.Balance,
+		&account.Nonce,
+		&account.CodeHash,
+		&account.StorageRoot,
+		&account.CreatedAt,
+		&account.UpdatedAt,
+	)
+
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return UserAccount{}, fmt.Errorf("account not found: %s", accountID)
+		}
+		return UserAccount{}, fmt.Errorf("error querying account: %w", err)
+	}
+
+	return account, nil
+}
+
+func (ua *UserAccount) Copy() ([]*UserAccount, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
+	defer cancel()
+	// make the query script
+	query := `SELECT id, account_id, balance, nonce, code_hash, storage_root, created_at, updated_at FROM accounts`
+
+	rows, err := db.QueryContext(ctx, query)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	var accounts []*UserAccount
+
+	for rows.Next() {
+		var account UserAccount
+		err := rows.Scan(
+			&account.ID,
+			&account.AccountID,
+			&account.Balance,
+			&account.Nonce,
+			&account.CodeHash,
+			&account.StorageRoot,
+			&account.UpdatedAt,
+			&account.CreatedAt,
+		)
+
+		if err != nil {
+			log.Println("Error scanning", err)
+		}
+
+		accounts = append(accounts, &account)
+
+	}
+
+	return accounts, nil
+}

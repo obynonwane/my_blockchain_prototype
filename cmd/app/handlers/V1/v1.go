@@ -39,6 +39,7 @@ func (app *AppConfig) PublicRoutes() http.Handler {
 
 	//other users link
 	mux.Get("/v1/genesis/list", pbl.Genesis)
+	mux.Get("/v1/accounts/list", pbl.Accounts)
 	mux.Post("/v1/create/user", pbl.CreateUser)
 
 	return mux

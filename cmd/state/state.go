@@ -2,6 +2,7 @@ package state
 
 import (
 	"log"
+	"strconv"
 	"sync"
 
 	"github.com/obynonwane/my_blockchain_prototype/cmd/app/handlers/V1/custom"
@@ -64,11 +65,52 @@ func (s *State) Shutdown() error {
 	return nil
 }
 
+// MempoolLength returns the current length of the mempool
+func (s *State) MempoolLength() int {
+	return s.mempool.Count()
+}
+
+// Mempool returns a copy of the mempool
+func (s *State) Mempool() []database.BlockTx {
+	return s.mempool.PickBest()
+}
+
+// UpsertMempool adds a new transaction to the mempool
+func (s *State) UpsertMempool(tx database.BlockTx) error {
+	return s.mempool.Upsert(tx)
+}
+
+func (s *State) Accounts() (map[database.AccountID]database.Account, error) {
+	data, err := s.Model.UserAccount.Copy()
+	if err != nil {
+		s.evHandler("state: error retrieving accounts copy", err)
+	}
+
+	// convert the data to a map
+	accounts := make(map[database.AccountID]database.Account)
+
+	for _, ua := range data {
+		balance, err := strconv.ParseUint(ua.Balance, 10, 64)
+		if err != nil {
+			s.evHandler("state: error converting balance to parseUint", err)
+		}
+
+		account := database.Account{
+			AccountID: database.AccountID(ua.AccountID),
+			Nonce:     uint64(ua.Nonce),
+			Balance:   balance,
+		}
+
+		accounts[database.AccountID(ua.AccountID)] = account
+	}
+	return accounts, nil
+}
+
 func (s *State) SeedGenesisAccount(genesis *genesis.Genesis) error {
 
 	err := s.Model.UserAccount.SeedGenesisAccount(genesis)
 	if err != nil {
-		log.Println("error creating user in state:", err)
+		s.evHandler("state: error seeding genesis accounts", err)
 	}
 
 	return err
