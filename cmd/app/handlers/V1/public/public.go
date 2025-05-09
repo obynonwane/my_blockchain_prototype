@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/obynonwane/my_blockchain_prototype/cmd/app/handlers/V1/custom"
 	"github.com/obynonwane/my_blockchain_prototype/cmd/database"
 	"github.com/obynonwane/my_blockchain_prototype/cmd/web"
@@ -51,7 +52,7 @@ func (h *Handlers) Accounts(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	// extract param from url
-	accountStr := r.URL.Query().Get("account")
+	accountStr := chi.URLParam(r, "account")
 
 	// 	// declare a map
 	var accounts map[database.AccountID]database.Account
@@ -90,4 +91,36 @@ func (h *Handlers) Accounts(w http.ResponseWriter, r *http.Request) {
 	}
 
 	web.Respond(ctx, w, accounts, http.StatusOK)
+}
+
+func (h Handlers) Mempool(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	acct := chi.URLParam(r, "account")
+
+	mempool := h.State.Mempool()
+
+	trans := []tx{}
+	for _, tran := range mempool {
+		if acct != "" && ((acct != string(tran.FromID)) && (acct != string(tran.ToID))) {
+			continue
+		}
+
+		trans = append(trans, tx{
+			FromAccount: tran.FromID,
+			To:          tran.ToID,
+			ChainID:     tran.ChainID,
+			Nonce:       tran.Nonce,
+			Value:       tran.Value,
+			Tip:         tran.Tip,
+			Data:        tran.Data,
+			TimeStamp:   tran.TimeStamp,
+			GasPrice:    tran.GasPrice,
+			GasUnits:    tran.GasUnits,
+			Sig:         tran.SignatureString(),
+		})
+	}
+
+	web.Respond(ctx, w, trans, http.StatusOK)
 }
