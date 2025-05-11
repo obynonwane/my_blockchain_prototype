@@ -93,3 +93,30 @@ dropdb: ## Drop the database
 # createdb: create the database
 createdb: ## Create the database
 	docker exec -it postgres createdb --username=admin --owner=admin nodedb
+
+
+
+
+
+# ==============================================================================
+# Transactions
+
+load:
+	go run cmd/wallet/cli/main.go send -a amara -n 1 -f 0x2B787621DD7A65270D0D995DD304787812211680 -t 0xbEE6ACE826eC3DE1B6349888B9151B92522F7F76 -v 100
+	go run cmd/wallet/cli/main.go send -a magnus -n 1 -f 0x2fF11fB8f1aB5705a1E60456B5AF5B9182F735E0 -t 0xbEE6ACE826eC3DE1B6349888B9151B92522F7F76 -v 75
+	go run cmd/wallet/cli/main.go send -a amara -n 2 -f 0x2B787621DD7A65270D0D995DD304787812211680 -t 0x6Fe6CF3c8fF57c58d24BfC869668F48BCbDb3BD9 -v 150
+	go run cmd/wallet/cli/main.go send -a magnus -n 2 -f 0x2fF11fB8f1aB5705a1E60456B5AF5B9182F735E0 -t 0xa988b1866EaBF72B4c53b592c97aAD8e4b9bDCC0 -v 125
+	go run cmd/wallet/cli/main.go send -a amara -n 3 -f 0x2B787621DD7A65270D0D995DD304787812211680 -t 0xa988b1866EaBF72B4c53b592c97aAD8e4b9bDCC0 -v 200
+	go run cmd/wallet/cli/main.go send -a magnus -n 3 -f 0x2fF11fB8f1aB5705a1E60456B5AF5B9182F735E0 -t 0x6Fe6CF3c8fF57c58d24BfC869668F48BCbDb3BD9 -v 250
+
+load2:
+	go run cmd/wallet/cli/main.go send -a amara -n 4 -f 0x2B787621DD7A65270D0D995DD304787812211680 -t 0xbEE6ACE826eC3DE1B6349888B9151B92522F7F76 -v 100
+	go run cmd/wallet/cli/main.go send -a magnus -n 4 -f 0x2fF11fB8f1aB5705a1E60456B5AF5B9182F735E0 -t 0xbEE6ACE826eC3DE1B6349888B9151B92522F7F76 -v 75
+
+load3:
+	go run cmd/wallet/cli/main.go send -a amara -n 5 -f 0x2B787621DD7A65270D0D995DD304787812211680 -t 0x6Fe6CF3c8fF57c58d24BfC869668F48BCbDb3BD9 -v 150
+	go run cmd/wallet/cli/main.go send -a magnus -n 5 -f 0x2fF11fB8f1aB5705a1E60456B5AF5B9182F735E0 -t 0xa988b1866EaBF72B4c53b592c97aAD8e4b9bDCC0 -v 125
+	go run cmd/wallet/cli/main.go send -a amara -n 6 -f 0x2B787621DD7A65270D0D995DD304787812211680 -t 0xa988b1866EaBF72B4c53b592c97aAD8e4b9bDCC0 -v 200
+	go run cmd/wallet/cli/main.go send -a magnus -n 6 -f 0x2fF11fB8f1aB5705a1E60456B5AF5B9182F735E0 -t 0x6Fe6CF3c8fF57c58d24BfC869668F48BCbDb3BD9 -v 250
+
+

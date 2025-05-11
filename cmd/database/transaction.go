@@ -1,7 +1,11 @@
 package database
 
 import (
+	"crypto/ecdsa"
+	"errors"
+	"fmt"
 	"math/big"
+	"time"
 
 	"github.com/obynonwane/my_blockchain_prototype/cmd/signature"
 )
@@ -42,4 +46,94 @@ type BlockTx struct {
 // SignatureString returns the signature as a string.
 func (tx SignedTx) SignatureString() string {
 	return signature.SignatureString(tx.V, tx.R, tx.S)
+}
+
+// NewTx constructs a new transaction.
+func NewTx(chainID uint16, nonce uint64, fromID AccountID, toID AccountID, value uint64, tip uint64, data []byte) (Tx, error) {
+	if !fromID.IsAccountID() {
+		return Tx{}, errors.New("from account is not properly formatted")
+	}
+	if !toID.IsAccountID() {
+		return Tx{}, errors.New("to account is not properly formatted")
+	}
+
+	tx := Tx{
+		ChainID: chainID,
+		Nonce:   nonce,
+		FromID:  fromID,
+		ToID:    toID,
+		Value:   value,
+		Tip:     tip,
+		Data:    data,
+	}
+
+	return tx, nil
+}
+
+// NewBlockTx constructs a new block transaction.
+func NewBlockTx(signedTx SignedTx, gasPrice uint64, unitsOfGas uint64) BlockTx {
+	return BlockTx{
+		SignedTx:  signedTx,
+		TimeStamp: uint64(time.Now().UTC().UnixMilli()),
+		GasPrice:  gasPrice,
+		GasUnits:  unitsOfGas,
+	}
+}
+
+// Sign uses the specified private key to sign the transaction.
+func (tx Tx) Sign(privateKey *ecdsa.PrivateKey) (SignedTx, error) {
+
+	// Sign the transaction with the private key to produce a signature.
+	v, r, s, err := signature.Sign(tx, privateKey)
+	if err != nil {
+		return SignedTx{}, err
+	}
+
+	// Construct the signed transaction by adding the signature
+	// in the [R|S|V] format.
+	signedTx := SignedTx{
+		Tx: tx,
+		V:  v,
+		R:  r,
+		S:  s,
+	}
+
+	return signedTx, nil
+}
+
+// Validate verifies the transaction has a proper signature that conforms to our
+// standards. It also checks the from field matches the account that signed the
+// transaction. Last it checks the format of the from and to fields.
+func (tx SignedTx) Validate(chainID uint16) error {
+
+	if tx.ChainID != chainID {
+		return fmt.Errorf("invalid chain id, got[%d] exp[%d]", tx.ChainID, chainID)
+	}
+	if !tx.FromID.IsAccountID() {
+		return errors.New("from account is not properly formatted")
+	}
+
+	if !tx.ToID.IsAccountID() {
+		return errors.New("to account is not properly formatted")
+	}
+
+	if tx.FromID == tx.ToID {
+		return fmt.Errorf("transaction invalid, sending money to yourself, from %s, to %s", tx.FromID, tx.ToID)
+	}
+
+	// validate the form of the signature only
+	if err := signature.VerifySignature(tx.V, tx.R, tx.S); err != nil {
+		return err
+	}
+
+	address, err := signature.FromAddress(tx.Tx, tx.V, tx.R, tx.S)
+	if err != nil {
+		return err
+	}
+
+	if address != string(tx.FromID) {
+		return errors.New("signature address doesn't match from address")
+	}
+
+	return nil
 }
