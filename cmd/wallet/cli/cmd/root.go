@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -42,8 +41,5 @@ func getPrivateKeyPath() string {
 		accountName += keyExtenstion
 	}
 
-	log.Println(accountName)
-	log.Println(accountPath)
-	log.Println(keyExtenstion)
 	return filepath.Join(accountPath, accountName)
 }

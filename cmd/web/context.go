@@ -46,3 +46,7 @@ func SetStatusCode(ctx context.Context, statusCode int) error {
 	v.StatusCode = statusCode
 	return nil
 }
+
+func Key() interface{} {
+	return key
+}

@@ -126,11 +126,13 @@ func (h Handlers) Mempool(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h Handlers) SubmitWalletTransaction(w http.ResponseWriter, r *http.Request) {
+
+
 	ctx := r.Context()
+
 
 	v, err := web.GetValues(ctx)
 	if err != nil {
-		// return web.NewShutdownError("web value missing from contex")
 		h.State.EventHandler()("state: web value missing from contex", err)
 	}
 
@@ -139,6 +141,7 @@ func (h Handlers) SubmitWalletTransaction(w http.ResponseWriter, r *http.Request
 	if err := web.Decode(r, &signedTx); err != nil {
 		h.State.EventHandler()("state: unable to decode payload", err)
 	}
+
 	h.State.EventHandler()("add tran", "traceid", v.TraceID, "sig:nonce", signedTx, "from", signedTx.FromID, "to", signedTx.ToID, "value", signedTx.Value, "tip", signedTx.Tip)
 
 	if err := h.State.UpsertWalletTransaction(signedTx); err != nil {

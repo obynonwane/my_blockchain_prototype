@@ -9,6 +9,7 @@ import (
 	"github.com/obynonwane/my_blockchain_prototype/cmd/app/handlers/V1/public"
 	"github.com/obynonwane/my_blockchain_prototype/cmd/config"
 	"github.com/obynonwane/my_blockchain_prototype/cmd/state"
+	"github.com/obynonwane/my_blockchain_prototype/cmd/web"
 )
 
 type AppConfig struct {
@@ -26,6 +27,8 @@ func (app *AppConfig) PublicRoutes() http.Handler {
 	}
 
 	mux := chi.NewRouter()
+
+	mux.Use(web.InjectValues)
 	mux.Use(cors.Handler(cors.Options{
 		AllowedOrigins: []string{
 			"https://*", "http://*",
@@ -41,7 +44,7 @@ func (app *AppConfig) PublicRoutes() http.Handler {
 	mux.Get("/v1/genesis/list", pbl.Genesis)
 	mux.Get("/v1/accounts/list", pbl.Accounts)
 	mux.Get("/v1/accounts/list/{account}", pbl.Accounts)
-	mux.Get("/v1/tx/submit", pbl.SubmitWalletTransaction)
+	mux.Post("/v1/tx/submit", pbl.SubmitWalletTransaction)
 	mux.Get("/v1/tx/uncommitted/list", pbl.Mempool)
 	mux.Post("/v1/create/user", pbl.CreateUser)
 

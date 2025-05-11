@@ -51,8 +51,6 @@ func sendRun(cmd *cobra.Command, args []string) {
 		log.Fatal(err)
 	}
 
-	log.Println(privateKey, "The KEY")
-
 	sendWithDetails(privateKey)
 }
 
